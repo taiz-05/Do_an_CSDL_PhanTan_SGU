@@ -8,22 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Chosen Palette: Cyber Security Dark Theme (Slate 900 bg, Slate 800 cards, Emerald 500 for DB1/Success, Orange 500 for DB2, Rose 500 for Errors/Offline, Sky 500 for Admin/Federated) -->
-    <!-- Application Structure Plan: A 3-column dashboard application layout. 
-         - Left Column: A vertical navigation menu listing all 7 scenarios, allowing the user to non-linearly explore the demo steps.
-         - Middle Column: The informational core, displaying the Objective, Actions, Results, and Presenter Script for the selected scenario.
-         - Right Column: A dynamic visualizer containing an HTML/CSS-based architecture topology diagram (showing DB status and connection flows) and a Chart.js Doughnut chart illustrating "Data Visibility" (how much of the total employee record is visible in the current scenario). 
-         This structure transforms a linear text document into an interactive simulator where users can "click through" the demo and instantly see the theoretical impact on the system architecture and data access. -->
-    <!-- Visualization & Content Choices: 
-         - Goal: Show system architecture status (Online/Offline) and data flow (Direct vs. Federated).
-         - Method: CSS Grid/Flexbox diagrams with dynamic class toggling (opacity, border colors, pseudo-elements for arrows).
-         - Justification: Best way to represent dynamic topological changes without SVG or external diagramming libraries.
-         - Goal: Show Data Visibility / Transparency per Role (Scenario 1, 2, 3).
-         - Method: Chart.js Doughnut Chart showing "Thông tin chung" vs "Lương thưởng".
-         - Justification: Clearly illustrates how Vertical Fragmentation hides specific slices of data from specific roles, and how Admin sees the "whole pie". 
-         - Confirmation NO SVG/Mermaid: Used purely HTML/CSS shapes and Canvas (Chart.js). -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
-
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
         
@@ -168,7 +152,7 @@
 
     <!-- JavaScript Logic -->
     <script>
-        // --- 1. DATA DEFINITION ---
+        // --- 1. DATA DEFINITION (10 KỊCH BẢN) ---
         const scenarios = [
             {
                 id: 1,
@@ -213,7 +197,7 @@
                 objective: "Chứng minh khả năng truy vấn gộp xuyên server mà ở tầng ứng dụng không cần biết dữ liệu đang bị phân mảnh ở đâu.",
                 actions: ["Click vào menu \"👑 Quản trị viên\"."],
                 results: "Bảng dữ liệu hiện ra đầy đủ tất cả các cột (Họ Tên, Phòng Ban, Lương, Hệ Số).",
-                pitch: "Điểm mấu chốt của CSDL Phân tán là Tính trong suốt (Transparency). Dưới góc nhìn của Admin, họ vẫn quản lý nhân sự như trên một bảng duy nhất. Để làm được điều này, nhóm em đã cấu hình FEDERATED Engine móc nối DB2 vào DB1, sau đó tạo một VIEW tự động JOIN dữ liệu 2 bên lại với nhau qua khóa MaNV. Tầng Ứng dụng chỉ việc SELECT trên View này mà không cần quan tâm dữ liệu thực tế đang nằm ở server nào.",
+                pitch: "Điểm mấu chốt của CSDL Phân tán là Tính trong suốt (Transparency). Dưới góc nhìn của Admin, họ vẫn quản lý nhân sự như trên một bảng duy nhất. Để làm được điều này, nhóm em đã cấu hình FEDERATED Engine móc nối DB2 vào DB1, sau đó tạo một VIEW tự động JOIN dữ liệu 2 bên lại với nhau. Tầng Ứng dụng chỉ việc SELECT trên View này mà không cần quan tâm dữ liệu thực tế đang nằm ở server nào.",
                 topology: {
                     appRole: "Role: Admin",
                     db1: "active",
@@ -231,7 +215,7 @@
                 objective: "Chứng minh khi Insert dữ liệu, hệ thống tự tách vào 2 DB.",
                 actions: [
                     "Ở form Thêm nhân sự, nhập thông tin (Mã 99, Nguyễn Văn Test, ...).",
-                    "Bấm Lưu Dữ Liệu."
+                    "Bấm nút 'Lưu Dữ Liệu (Transaction)'."
                 ],
                 results: "Dữ liệu được lưu thành công. Admin thấy bản ghi mới hợp nhất.",
                 pitch: "Khi Admin thêm nhân sự mới, API sẽ gọi vào một Stored Procedure trên DB1. SP này sử dụng Transaction để tự động cắt dữ liệu làm đôi: Tên và Phòng ban được INSERT vào DB1, Lương và Hệ số được INSERT xuyên qua mạng (via Federated Table) để lưu vào DB2. Mọi thứ diễn ra hoàn toàn tự động.",
@@ -247,10 +231,51 @@
             },
             {
                 id: 5,
+                icon: "📝",
+                title: "Đồng Bộ Thao Tác (Update)",
+                objective: "Chứng minh khả năng cập nhật dữ liệu phân tán ở cả 2 máy chủ cùng một lúc.",
+                actions: [
+                    "Ở form Cập nhật thông tin, nhập: Mã NV (99), Họ tên mới (Nguyễn VIP), Phòng ban (GD), Lương (50tr).",
+                    "Bấm nút 'Cập Nhật Dữ Liệu'."
+                ],
+                results: "Dữ liệu nhân viên mã 99 trên bảng lập tức thay đổi toàn bộ.",
+                pitch: "Bên cạnh tính năng Thêm, hệ thống cũng xử lý triệt để bài toán Cập nhật. Khi em đổi phòng ban và tăng lương cho nhân sự, một giao dịch (Transaction) sẽ khóa cả 2 bản ghi ở 2 Server, thực hiện lệnh UPDATE song song và chỉ COMMIT khi cả 2 đều thành công, hoàn thiện chu trình dữ liệu phân tán.",
+                topology: {
+                    appRole: "Lệnh: UPDATE",
+                    db1: "active",
+                    db2: "active",
+                    lines: { appDb1: "active", appDb2: "inactive", federated: "active" },
+                    statusMsg: "Cập nhật đồng thời: DB1 (Hành chính) & DB2 (Lương)."
+                },
+                chartData: [100, 100], 
+                chartCaption: "Cập nhật dữ liệu thành công trên cả 2 phân mảnh."
+            },
+            {
+                id: 6,
+                icon: "📊",
+                title: "Thống Kê Phân Tán",
+                objective: "Chứng minh hệ thống có thể thực hiện các truy vấn phức tạp (Group By, Sum) trên dữ liệu bị cắt dọc ở nhiều Server.",
+                actions: [
+                    "Tại khu vực Thống kê Quỹ Lương Phân Tán, bấm nút 'Làm mới báo cáo'."
+                ],
+                results: "Hệ thống tính toán và in ra bảng tổng quỹ lương chia theo từng Phòng Ban.",
+                pitch: "Thưa Hội đồng, để chứng minh sức mạnh của Federated Engine, em đã tạo chức năng Báo cáo Quỹ Lương. Chức năng này đòi hỏi hệ thống phải gom nhóm (GROUP BY) theo Phòng ban nằm ở DB1, đồng thời tính tổng (SUM) tiền lương nằm ở DB2. Thông qua View phân tán, MySQL đã tự động giải quyết bài toán JOIN mạng này một cách tối ưu nhất để ra được kết quả tức thì!",
+                topology: {
+                    appRole: "Lệnh: GROUP BY & SUM",
+                    db1: "active",
+                    db2: "online",
+                    lines: { appDb1: "active", appDb2: "inactive", federated: "active" },
+                    statusMsg: "DB1 gom nhóm, JOIN qua mạng lấy Lương từ DB2 để tính tổng."
+                },
+                chartData: [100, 100], 
+                chartCaption: "Truy vấn gộp và tính toán dữ liệu chéo thành công."
+            },
+            {
+                id: 7,
                 icon: "🗑️",
                 title: "Đồng Bộ Thao Tác (Delete)",
                 objective: "Khép kín chu trình quản lý (CRUD), chứng minh khi xóa 1 nhân sự, dữ liệu ở cả 2 Node vật lý đều bị xóa sạch sẽ cùng lúc.",
-                actions: ["Nhập số 99 vào ô Xóa nhân sự.", "Bấm nút Thực thi Xóa."],
+                actions: ["Nhập số 99 vào ô Xóa nhân sự.", "Bấm nút 'Thực thi Xóa'."],
                 results: "Hệ thống báo Xóa thành công, nhân viên 99 biến mất hoàn toàn.",
                 pitch: "Khi một nhân viên nghỉ việc, Admin chỉ cần gọi 1 thao tác duy nhất. Cơ chế Transaction sẽ đảm bảo lệnh DELETE chạy đồng thời, xóa tên ở Trụ sở chính và xóa lương ở phòng Kế toán cùng một thời điểm. Không bao giờ xảy ra lỗi dữ liệu mồ côi (tên bị xóa nhưng vẫn còn tồn tại quỹ lương).",
                 topology: {
@@ -264,7 +289,7 @@
                 chartCaption: "Xóa sạch dữ liệu liên kết trên toàn hệ thống."
             },
             {
-                id: 6,
+                id: 8,
                 icon: "🌩️",
                 title: "Xử lý Sự cố & Rollback",
                 objective: "Chứng minh nếu có sự cố đứt mạng, Transaction sẽ tự động Rollback.",
@@ -285,7 +310,7 @@
                 chartCaption: "Giao dịch bị hủy. Không có dữ liệu nào được ghi."
             },
             {
-                id: 7,
+                id: 9,
                 icon: "🛡️",
                 title: "Tính Tự Trị Địa Phương",
                 objective: "Khẳng định: Một máy chủ sập không được làm chết toàn bộ doanh nghiệp.",
@@ -306,18 +331,18 @@
                 chartCaption: "Tính tự trị: DB2 vẫn hiển thị dữ liệu lương độc lập."
             },
             {
-                id: 8,
+                id: 10,
                 icon: "🔐",
-                title: "Bảo Mật Cấp Đáy (Bypass)",
+                title: "Bảo Mật Cấp Đáy (Terminal)",
                 objective: "Chứng minh hệ thống bảo mật ở tận lõi Database Engine, loại bỏ rủi ro tấn công vượt quyền.",
                 actions: [
-                    "Dùng DBeaver login trực tiếp DB1 bằng tài khoản 'nhanvien'.",
-                    "Gõ SQL: SELECT * FROM vw_HoSoToanDien;"
+                    "Mở Terminal, đột nhập server bằng lệnh: docker exec -it do-an-phan-manh-doc-mysql-hanhchinh-1 mysql -u nhanvien -p",
+                    "Gõ lệnh cấm: SELECT * FROM vw_HoSoToanDien;"
                 ],
-                results: "MySQL từ chối truy cập: SELECT command denied.",
-                pitch: "Nhiều hệ thống chỉ dùng code ở Web để ẩn các cột nhạy cảm đi. Nếu Hacker lấy được tài khoản Nhân viên và dùng Tool kết nối thẳng vào CSDL thì sẽ dễ dàng đọc được View gộp chứa lương. Tuy nhiên, nhóm em bảo mật bằng lệnh GRANT rào chặt ngay dưới tầng Database Engine. Dù Hacker có chui qua mặt giao diện, họ vẫn bị từ chối truy cập tuyệt đối.",
+                results: "Terminal văng lỗi đỏ: ERROR 1142 (42000): SELECT command denied.",
+                pitch: "Như thầy cô thấy, MySQL đã lập tức văng lỗi ERROR 1142: Access Denied. Dù Hacker có chui qua mặt giao diện Web, sử dụng giao thức kết nối sâu nhất qua Terminal, họ vẫn bị từ chối truy cập tuyệt đối vì nhóm em đã rào bảo mật bằng lệnh GRANT ngay dưới tầng Database Engine vật lý!",
                 topology: {
-                    appRole: "Tool: DBeaver",
+                    appRole: "Tool: Terminal",
                     db1: "active",
                     db2: "online",
                     lines: { appDb1: "active", appDb2: "inactive", federated: "inactive" },

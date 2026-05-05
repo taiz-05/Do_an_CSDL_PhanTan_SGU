@@ -99,7 +99,46 @@ def xoa_nhan_vien(ma_nv):
         return jsonify({"status": "success", "message": f"Đã xóa hoàn toàn nhân viên mã {ma_nv} khỏi hệ thống!"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+    
+    
+# ==========================================
+# TEST CASE 8: THỐNG KÊ QUỸ LƯƠNG (PHÂN TÁN)
+# ==========================================
+@app.route('/api/admin/thong-ke', methods=['GET'])
+def thong_ke_quy_luong():
+    try:
+        conn = get_db_connection('root', 'root', 3306, 'db_hanhchinh')
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+            # Query gộp và tính toán (Group By) trên View phân tán
+            sql = """
+                SELECT PhongBan, COUNT(MaNV) as SoNhanVien, SUM(LuongCoBan * HeSo) as TongQuyLuong
+                FROM vw_HoSoToanDien
+                GROUP BY PhongBan
+            """
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        conn.close()
+        return jsonify({"status": "success", "data": data})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
+# ==========================================
+# TEST CASE 9: SỬA NHÂN VIÊN ĐỒNG BỘ
+# ==========================================
+@app.route('/api/admin/sua-nhan-vien', methods=['PUT', 'OPTIONS'])
+def sua_nhan_vien():
+    if request.method == 'OPTIONS':
+        return '', 200
+    try:
+        data = request.json
+        conn = get_db_connection('root', 'root', 3306, 'db_hanhchinh')
+        with conn.cursor() as cursor:
+            cursor.execute("CALL sp_SuaNhanVien(%s, %s, %s, %s, %s)", 
+                           (data['maNV'], data['hoTen'], data['phongBan'], data['luongCB'], data['heSo']))
+        conn.close()
+        return jsonify({"status": "success", "message": f"Đã cập nhật thành công nhân viên mã {data['maNV']}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 # ------------------------------------------
 # TUYỆT ĐỐI ĐỂ DÒNG NÀY Ở DƯỚI CÙNG CỦA FILE:
 if __name__ == '__main__':

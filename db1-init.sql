@@ -72,3 +72,28 @@ BEGIN
     COMMIT;
 END //
 DELIMITER ;
+
+
+-- ==========================================
+-- THÊM TÍNH NĂNG SỬA NHÂN VIÊN
+-- ==========================================
+DELIMITER //
+CREATE PROCEDURE sp_SuaNhanVien(
+    IN p_MaNV INT, IN p_HoTen VARCHAR(100), IN p_PhongBan VARCHAR(50), 
+    IN p_LuongCoBan DECIMAL(15,2), IN p_HeSo DECIMAL(4,2)
+)
+BEGIN
+    DECLARE exit handler for sqlexception
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+        -- Cập nhật thông tin ở DB1
+        UPDATE ThongTinChung SET HoTen = p_HoTen, PhongBan = p_PhongBan WHERE MaNV = p_MaNV;
+        -- Cập nhật lương ở DB2 qua Federated
+        UPDATE Remote_LuongThuong SET LuongCoBan = p_LuongCoBan, HeSo = p_HeSo WHERE MaNV = p_MaNV;
+    COMMIT;
+END //
+DELIMITER ;
