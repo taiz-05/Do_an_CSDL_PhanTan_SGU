@@ -52,3 +52,23 @@ GRANT SELECT ON db_hanhchinh.ThongTinChung TO 'nhanvien'@'%';
 INSERT INTO ThongTinChung VALUES 
 (1, 'Nguyễn Văn A', 'IT'), 
 (2, 'Trần Thị B', 'Nhân sự');
+
+
+-- Thêm Stored Procedure Xóa Nhân Viên (Đồng bộ 2 bên)
+DELIMITER //
+CREATE PROCEDURE sp_XoaNhanVien(IN p_MaNV INT)
+BEGIN
+    DECLARE exit handler for sqlexception
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+        -- Xóa thông tin hành chính ở DB1
+        DELETE FROM ThongTinChung WHERE MaNV = p_MaNV;
+        -- Xóa thông tin lương ở DB2 (thông qua bảng Federated)
+        DELETE FROM Remote_LuongThuong WHERE MaNV = p_MaNV;
+    COMMIT;
+END //
+DELIMITER ;

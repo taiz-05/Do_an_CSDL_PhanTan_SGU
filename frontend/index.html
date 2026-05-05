@@ -178,6 +178,21 @@
                 <button class="btn-submit" onclick="addNhanVien()">
                     <i class="fas fa-save"></i> Lưu Dữ Liệu (Transaction)
                 </button>
+                <!-- Thêm phần Giao diện Xóa Nhân Sự -->
+                <div style="margin-top: 30px; border-top: 1px dashed var(--border); padding-top: 20px;">
+                    <div class="card-header" style="border-bottom: none; padding-bottom: 0;">
+                        <i class="fas fa-user-minus" style="color: var(--danger);"></i>
+                        <h3 style="color: var(--danger);">Xóa nhân sự (Xóa khỏi 2 Database)</h3>
+                    </div>
+                    <div class="form-grid" style="grid-template-columns: 1fr; max-width: 300px;">
+                        <div class="input-group">
+                            <input type="number" id="maNV_xoa" placeholder="Nhập Mã NV cần xóa (VD: 2)">
+                        </div>
+                    </div>
+                    <button class="btn-submit" style="background-color: var(--danger); max-width: 300px;" onclick="deleteNhanVien()">
+                        <i class="fas fa-trash"></i> Thực thi Xóa
+                    </button>
+                </div>
             </div>
 
             <!-- Table Data -->
@@ -256,15 +271,25 @@
         try {
             const res = await fetch(API_BASE + endpoint);
             const result = await res.json();
-
-            if (res.status === 403 || result.status === 'error') {
-                showToast('error', 'Truy cập bị từ chối', `User ${roleName} không có quyền xem bảng này!`);
-                document.getElementById('result').innerHTML = `
-                    <div class="empty-state" style="color: var(--danger);">
-                        <i class="fas fa-lock" style="color: #fca5a5;"></i>
-                        <h3>ACCESS DENIED</h3>
-                        <p style="margin-top: 10px;">${result.message}</p>
-                    </div>`;
+ if (res.status === 403 || result.status === 'error') {
+                // Kiểm tra xem lỗi là do sập mạng (10061 / 2003) hay do Access Denied
+                if (result.message && (result.message.includes('10061') || result.message.includes('2003'))) {
+                    showToast('error', 'Sập Server (Mất kết nối)', `Node chứa dữ liệu của ${roleName} hiện đang Offline!`);
+                    document.getElementById('result').innerHTML = `
+                        <div class="empty-state" style="color: var(--danger);">
+                            <i class="fas fa-server" style="color: #fca5a5; font-size: 48px; margin-bottom: 16px;"></i>
+                            <h3>SERVER OFFLINE</h3>
+                            <p style="margin-top: 10px;">${result.message}</p>
+                        </div>`;
+                } else {
+                    showToast('error', 'Truy cập bị từ chối', `User ${roleName} không có quyền xem bảng này!`);
+                    document.getElementById('result').innerHTML = `
+                        <div class="empty-state" style="color: var(--danger);">
+                            <i class="fas fa-lock" style="color: #fca5a5; font-size: 48px; margin-bottom: 16px;"></i>
+                            <h3>ACCESS DENIED</h3>
+                            <p style="margin-top: 10px;">${result.message}</p>
+                        </div>`;
+                }
                 return;
             }
             showToast('success', 'Kết nối thành công', `Đã tải dữ liệu theo quyền ${roleName}.`);
@@ -333,6 +358,33 @@
         } finally {
             btn.innerHTML = '<i class="fas fa-save"></i> Lưu Dữ Liệu (Transaction)';
             btn.disabled = false;
+        }
+    }
+
+    async function deleteNhanVien() {
+        const maNV = document.getElementById('maNV_xoa').value;
+        if (!maNV) { 
+            showToast('error', 'Lỗi', 'Vui lòng nhập Mã NV cần xóa!'); 
+            return; 
+        }
+
+        if(!confirm(`Bạn có chắc chắn muốn xóa nhân viên mã ${maNV} trên toàn hệ thống không?`)) return;
+
+        try {
+            const res = await fetch(API_BASE + `/api/admin/xoa-nhan-vien/${maNV}`, {
+                method: 'DELETE'
+            });
+            const result = await res.json();
+            
+            if (result.status === 'success') {
+                showToast('success', 'Đã Xóa Thành Công', result.message);
+                document.getElementById('maNV_xoa').value = '';
+                loadAdmin(); // Tải lại bảng để xem dữ liệu mới
+            } else {
+                showToast('error', 'Lỗi Transaction', result.message);
+            }
+        } catch (e) { 
+            showToast('error', 'Lỗi Server', 'Không thể kết nối đến Backend.');
         }
     }
 

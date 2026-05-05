@@ -85,6 +85,23 @@ def them_nhan_vien():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
+  # ==========================================
+# TEST CASE 5: XÓA NHÂN SỰ ĐỒNG BỘ
+# ==========================================
+@app.route('/api/admin/xoa-nhan-vien/<int:ma_nv>', methods=['DELETE', 'OPTIONS'])
+def xoa_nhan_vien(ma_nv):
+    try:
+        conn = get_db_connection('root', 'root', 3306, 'db_hanhchinh')
+        with conn.cursor() as cursor:
+            cursor.execute("CALL sp_XoaNhanVien(%s)", (ma_nv,))
+        conn.close()
+        return jsonify({"status": "success", "message": f"Đã xóa hoàn toàn nhân viên mã {ma_nv} khỏi hệ thống!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ------------------------------------------
+# TUYỆT ĐỐI ĐỂ DÒNG NÀY Ở DƯỚI CÙNG CỦA FILE:
 if __name__ == '__main__':
     print("🚀 Máy chủ Backend Đồ án 1 đang chạy tại http://localhost:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)
