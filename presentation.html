@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HR System — Thuyết trình Đồ án CSDL Phân tán</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #21262d;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --warn: #f0883e;
+    --danger: #f85149;
+    --purple: #bc8cff;
+    --teal: #39d353;
+    --yellow: #e3b341;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --slide-w: 960px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+
+  /* ─── NAVIGATION ─── */
+  #nav { position: fixed; top: 0; left: 0; right: 0; height: 48px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 100; }
+  #nav .logo { font-weight: 700; font-size: 15px; color: var(--accent); letter-spacing: .5px; }
+  #nav .controls { display: flex; gap: 10px; align-items: center; }
+  #nav button { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 5px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: background .2s; }
+  #nav button:hover { background: var(--accent); color: #fff; }
+  #slide-counter { font-size: 13px; color: var(--text2); min-width: 60px; text-align: center; }
+  #progress-bar { position: fixed; top: 48px; left: 0; height: 3px; background: var(--accent); transition: width .3s ease; z-index: 100; }
+
+  /* ─── SLIDE CONTAINER ─── */
+  #slides-wrapper { position: fixed; top: 48px; left: 0; right: 0; bottom: 0; overflow: hidden; }
+  .slide { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateX(60px); transition: opacity .4s ease, transform .4s ease; pointer-events: none; }
+  .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; }
+  .slide.prev { opacity: 0; transform: translateX(-60px); }
+  .slide-inner { width: var(--slide-w); max-width: 98vw; max-height: calc(100vh - 80px); overflow-y: auto; padding: 36px 40px; }
+  .slide-inner::-webkit-scrollbar { width: 5px; } 
+  .slide-inner::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ─── TYPOGRAPHY ─── */
+  h1 { font-size: 2.4rem; font-weight: 800; line-height: 1.15; }
+  h2 { font-size: 1.65rem; font-weight: 700; margin-bottom: 18px; }
+  h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+  p { line-height: 1.7; color: var(--text2); }
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  .tag-blue { background: rgba(88,166,255,.15); color: var(--accent); border: 1px solid rgba(88,166,255,.3); }
+  .tag-green { background: rgba(63,185,80,.15); color: var(--accent2); border: 1px solid rgba(63,185,80,.3); }
+  .tag-orange { background: rgba(240,136,62,.15); color: var(--warn); border: 1px solid rgba(240,136,62,.3); }
+  .tag-red { background: rgba(248,81,73,.15); color: var(--danger); border: 1px solid rgba(248,81,73,.3); }
+  .tag-purple { background: rgba(188,140,255,.15); color: var(--purple); border: 1px solid rgba(188,140,255,.3); }
+  .accent { color: var(--accent); }
+  .green { color: var(--accent2); }
+  .orange { color: var(--warn); }
+  .danger { color: var(--danger); }
+  .purple { color: var(--purple); }
+  .yellow { color: var(--yellow); }
+  .sub { color: var(--text2); font-size: .9em; }
+
+  /* ─── CARDS ─── */
+  .card-grid { display: grid; gap: 14px; }
+  .card-grid-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+  .card.highlight { border-color: var(--accent); }
+  .card.success { border-color: var(--accent2); }
+  .card.warning { border-color: var(--warn); }
+  .card.danger { border-color: var(--danger); }
+  .card.purple { border-color: var(--purple); }
+  .card .card-icon { font-size: 1.8rem; margin-bottom: 10px; }
+  .card h3 { color: var(--text); }
+
+  /* ─── TABLE ─── */
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  th { background: var(--bg3); color: var(--text); padding: 9px 12px; text-align: left; border-bottom: 2px solid var(--border); }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+  tr:hover td { background: var(--bg2); }
+
+  /* ─── CODE BLOCK ─── */
+  pre { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; font-size: .78rem; font-family: 'Cascadia Code','Consolas',monospace; overflow-x: auto; line-height: 1.55; color: #e6edf3; }
+  .kw { color: #ff7b72; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #8b949e; font-style: italic; }
+  .num { color: #f0883e; }
+
+  /* ─── DIAGRAM ─── */
+  .diagram { display: flex; align-items: center; gap: 0; justify-content: center; flex-wrap: wrap; margin: 20px 0;}
+  .diagram-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 15px 20px; text-align: center; font-size: .95rem; font-weight: 600; min-width: 140px; }
+  .diagram-box.flask { border-color: var(--accent); color: var(--accent); }
+  .diagram-box.db1 { border-color: var(--accent2); color: var(--accent2); }
+  .diagram-box.db2 { border-color: var(--warn); color: var(--warn); }
+  .diagram-arrow { color: var(--text2); font-size: 1.5rem; padding: 0 15px; }
+
+  /* ─── UTILS ─── */
+  .mt8 { margin-top: 8px; } .mt12 { margin-top: 12px; } .mt16 { margin-top: 16px; } .mt20 { margin-top: 20px; } .mt24 { margin-top: 24px; }
+  .mb8 { margin-bottom: 8px; } .mb12 { margin-bottom: 12px; } .mb16 { margin-bottom: 16px; }
+  .row { display: flex; gap: 16px; align-items: flex-start; } .col { flex: 1; }
+  .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .pill { background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: .78rem; color: var(--text2); }
+  .pill.on { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,.08); }
+
+  /* ─── TITLE SLIDE SPECIAL ─── */
+  #slide-0 .slide-inner { display: flex; flex-direction: column; justify-content: center; min-height: calc(100vh - 100px); }
+  .title-badge { font-size: .8rem; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 16px; }
+  .title-sub { font-size: 1.05rem; color: var(--text2); margin-top: 20px; line-height: 1.7; max-width: 720px; }
+  .title-members { margin-top: 36px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 600px; }
+  .member { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: .85rem; }
+  .member span { color: var(--accent2); font-weight: 600; }
+
+  /* ─── KEYBOARD HINT ─── */
+  .key-hint { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); font-size: .72rem; color: var(--text2); background: var(--bg2); border: 1px solid var(--border); padding: 4px 14px; border-radius: 20px; }
+
+  /* ─── NARRATOR BOX ─── */
+  .tc-narrator { background: rgba(88,166,255,.07); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 8px 0 16px; font-size: .88rem; line-height: 1.6; color: var(--text); }
+  .tc-narrator b { color: var(--accent); }
+  .tc-narrator .nar-label { display: inline-block; font-size: .75rem; font-weight: 700; letter-spacing: .5px; color: var(--accent); text-transform: uppercase; margin-bottom: 5px; }
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="logo">🏢 HR System Presentation</div>
+  <div class="controls">
+    <button id="btn-prev">← Trước</button>
+    <span id="slide-counter">1 / 7</span>
+    <button id="btn-next">Tiếp →</button>
+  </div>
+</nav>
+<div id="progress-bar"></div>
+
+<div id="slides-wrapper">
+
+  <!-- ─────────────────────────────────────────────
+       SLIDE 0 — COVER
+  ───────────────────────────────────────────── -->
+  <div class="slide active" id="slide-0">
+    <div class="slide-inner">
+      <div class="title-badge">Đề tài 1 · CSDL Phân tán</div>
+      <h1>Hệ thống Quản lý<br><span class="accent">Lương & Hồ sơ Nhân sự</span></h1>
+      <p class="title-sub">Báo cáo áp dụng kỹ thuật <strong style="color:var(--text)">Phân mảnh dọc (Vertical Fragmentation)</strong> để bảo mật dữ liệu nhạy cảm. Hệ thống chứng minh 3 đặc tính cốt lõi: <strong>Bảo mật phân quyền</strong>, <strong>Tính trong suốt</strong> và <strong>Tính toàn vẹn (Transaction)</strong> trên CSDL Phân tán.</p>
+      
+      <div class="pill-row mt24">
+        <div class="pill on">MySQL 8.0</div>
+        <div class="pill on">Federated Engine</div>
+        <div class="pill on">Python Flask</div>
+        <div class="pill on">Docker Compose</div>
+        <div class="pill on">Stored Procedures</div>
+      </div>
+      <p class="sub mt24">Thực hiện bởi: <strong style="color:var(--text)">Nhóm Đồ án</strong> · Giảng viên: <strong style="color:var(--text)">Vũ Ngọc Thanh Sang</strong></p>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SLIDE 1 — TỔNG QUAN KIẾN TRÚC
+  ───────────────────────────────────────────── -->
+  <div class="slide" id="slide-1">
+    <div class="slide-inner">
+      <div class="tag tag-blue mb12">Kiến trúc hệ thống</div>
+      <h2>Tổng quan Phân mảnh dọc</h2>
+      <p class="mb16">Hệ thống chia tách dữ liệu hành chính và dữ liệu tài chính ra 2 Database Server vật lý độc lập (khác port, khác container) để giảm thiểu rủi ro bảo mật.</p>
+      
+      <div class="diagram mt20">
+        <div class="diagram-box" style="border-color:var(--text2);color:var(--text2)">Frontend<br><small class="sub">HTML/JS</small></div>
+        <div class="diagram-arrow">↔</div>
+        <div class="diagram-box flask">Flask Backend<br><small>:5000</small></div>
+        <div class="diagram-arrow">↔</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="diagram-box db1">Node 1: Hành chính<br><small>Port: 3306</small></div>
+          <div class="diagram-box db2">Node 2: Lương<br><small>Port: 3307</small></div>
+        </div>
+      </div>
+
+      <div class="card-grid card-grid-2 mt24">
+        <div class="card success">
+          <div class="card-icon">📁</div>
+          <h3 class="green">DB1: Hành chính (Thông tin chung)</h3>
+          <p class="mt8 sub">Chứa bảng <code>ThongTinChung</code> gồm các cột: <b>MaNV, HoTen, PhongBan</b>. Dữ liệu công khai, các bộ phận khác có thể tra cứu.</p>
+        </div>
+        <div class="card warning">
+          <div class="card-icon">💰</div>
+          <h3 class="orange">DB2: Lương (Nhạy cảm)</h3>
+          <p class="mt8 sub">Chứa bảng <code>LuongThuong</code> gồm các cột: <b>MaNV, LuongCoBan, HeSo</b>. Dữ liệu tối mật, chỉ Kế toán mới có quyền truy cập trực tiếp.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SLIDE 2 — BẢO MẬT & PHÂN QUYỀN
+  ───────────────────────────────────────────── -->
+  <div class="slide" id="slide-2">
+    <div class="slide-inner">
+      <div class="tag tag-green mb12">Vấn đề 1</div>
+      <h2>Phân quyền Truy cập (Authorization)</h2>
+      <p class="mb16">Hệ thống tạo ra các User độc lập tại tầng Database. Ngay cả khi bị lộ mã nguồn hay bị tấn công SQL Injection ở ứng dụng Hành chính, Hacker cũng không thể lấy được Lương.</p>
+      
+      <div class="row">
+        <div class="col">
+          <div class="card highlight">
+            <h3 class="accent mb8">Tài khoản Nhân viên (Chỉ DB1)</h3>
+            <pre><span class="cm">-- Chỉ cấp quyền SELECT trên bảng công khai</span>
+<span class="kw">CREATE USER</span> <span class="str">'nhanvien'</span>@<span class="str">'%'</span> <span class="kw">IDENTIFIED BY</span> <span class="str">'***'</span>;
+<span class="kw">GRANT SELECT ON</span> db_hanhchinh.ThongTinChung 
+<span class="kw">TO</span> <span class="str">'nhanvien'</span>@<span class="str">'%'</span>;</pre>
+            <p class="mt8 sub">Truy vấn vào CSDL Lương sẽ lập tức bị báo lỗi <code>Access Denied</code> từ MySQL.</p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card warning">
+            <h3 class="orange mb8">Tài khoản Kế toán (Chỉ DB2)</h3>
+            <pre><span class="cm">-- Chỉ cấp quyền quản lý trên DB Lương</span>
+<span class="kw">CREATE USER</span> <span class="str">'ketoan'</span>@<span class="str">'%'</span> <span class="kw">IDENTIFIED BY</span> <span class="str">'***'</span>;
+<span class="kw">GRANT SELECT, UPDATE ON</span> db_luong.LuongThuong 
+<span class="kw">TO</span> <span class="str">'ketoan'</span>@<span class="str">'%'</span>;</pre>
+            <p class="mt8 sub">Kế toán chỉ làm việc với các con số và Mã Nhân Viên, không thấy tên người nhận.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SLIDE 3 — TÍNH TRONG SUỐT
+  ───────────────────────────────────────────── -->
+  <div class="slide" id="slide-3">
+    <div class="slide-inner">
+      <div class="tag tag-purple mb12">Vấn đề 2</div>
+      <h2>Tính trong suốt (Transparency)</h2>
+      
+      <div class="tc-narrator">
+        <div class="nar-label">Mục tiêu</div>
+        Quản trị viên (Admin) không cần biết dữ liệu đang bị phân mảnh ở đâu. Tại Trụ sở chính (DB1), Admin chỉ cần <b>SELECT trên 1 bảng duy nhất</b> để lấy ra toàn bộ thông tin (Tên + Lương).
+      </div>
+
+      <div class="card purple mt16">
+        <h3 class="purple mb8">Cấu hình FEDERATED Engine + VIEW</h3>
+        <p class="mb12 sub">Tạo một bảng ảo ở DB1, bảng này âm thầm kết nối qua TCP/IP tới DB2. Sau đó dùng VIEW để JOIN dữ liệu vật lý và dữ liệu từ mạng.</p>
+        <pre><span class="cm">-- 1. Tạo bảng ảo móc nối sang DB2</span>
+<span class="kw">CREATE TABLE</span> Remote_LuongThuong (
+    MaNV INT PRIMARY KEY,
+    LuongCoBan DECIMAL(15, 2),
+    HeSo DECIMAL(4, 2)
+) <span class="kw">ENGINE</span>=FEDERATED 
+<span class="kw">CONNECTION</span>=<span class="str">'mysql://link_user:***@mysql-luong:3306/db_luong/LuongThuong'</span>;
+
+<span class="cm">-- 2. Tạo View trong suốt cho Admin</span>
+<span class="kw">CREATE VIEW</span> vw_HoSoToanDien <span class="kw">AS</span>
+<span class="kw">SELECT</span> a.MaNV, a.HoTen, a.PhongBan, b.LuongCoBan, b.HeSo
+<span class="kw">FROM</span> ThongTinChung a
+<span class="kw">LEFT JOIN</span> Remote_LuongThuong b <span class="kw">ON</span> a.MaNV = b.MaNV;</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SLIDE 4 — ĐỒNG BỘ THAO TÁC & TOÀN VẸN
+  ───────────────────────────────────────────── -->
+  <div class="slide" id="slide-4">
+    <div class="slide-inner">
+      <div class="tag tag-orange mb12">Vấn đề 3</div>
+      <h2>Đồng bộ & Tính toàn vẹn (Transactions)</h2>
+      <p class="mb16">Khi thêm một nhân viên mới, dữ liệu phải được tự động "chẻ đôi" vào DB1 và DB2. Nếu DB2 bị sập đột ngột (mất mạng), hệ thống <b>phải hủy bỏ (Rollback)</b> thao tác trên DB1 để tránh rác dữ liệu.</p>
+      
+      <div class="card highlight">
+        <h3 class="accent mb8">Stored Procedure <code>sp_ThemNhanVien</code></h3>
+        <pre><span class="kw">CREATE PROCEDURE</span> sp_ThemNhanVien(...)
+<span class="kw">BEGIN</span>
+    <span class="cm">-- Bắt lỗi: Nếu 1 trong 2 lệnh INSERT thất bại -> ROLLBACK tất cả</span>
+    <span class="kw">DECLARE EXIT HANDLER FOR SQLEXCEPTION</span>
+    <span class="kw">BEGIN</span>
+        <span class="kw">ROLLBACK</span>;
+        <span class="kw">RESIGNAL</span>;
+    <span class="kw">END</span>;
+
+    <span class="kw">START TRANSACTION</span>;
+        <span class="cm">-- Insert Local (Thông tin hành chính)</span>
+        <span class="kw">INSERT INTO</span> ThongTinChung (MaNV, HoTen, PhongBan) <span class="kw">VALUES</span> (...);
+        
+        <span class="cm">-- Insert Remote (Xuyên qua bảng Federated để vào DB2)</span>
+        <span class="kw">INSERT INTO</span> Remote_LuongThuong (MaNV, LuongCoBan, HeSo) <span class="kw">VALUES</span> (...);
+    <span class="kw">COMMIT</span>;
+<span class="kw">END</span>;</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SLIDE 5 — KỊCH BẢN DEMO 1, 2, 3
+  ───────────────────────────────────────────── -->
+  <div class="slide" id="slide-5">
+    <div class="slide-inner">
+      <div class="tag tag-red mb12">Thực hành</div>
+      <h2>Các Kịch bản Demo Hệ thống</h2>
+      
+      <div class="card-grid mt16">
+        <div class="card success">
+          <h3 class="green"><i class="fas fa-user"></i> Demo 1: Tài khoản Nhân viên</h3>
+          <p class="mt8 sub"><b>Thao tác:</b> Đăng nhập với tư cách Nhân viên.</p>
+          <p class="mt4 sub"><b>Kết quả:</b> Màn hình chỉ trả về các cột <code>MaNV</code>, <code>HoTen</code>, <code>PhongBan</code>. Việc giới hạn cấp Database giúp bảo vệ dữ liệu tuyệt đối.</p>
+        </div>
+        
+        <div class="card warning">
+          <h3 class="orange"><i class="fas fa-money-bill"></i> Demo 2: Tài khoản Kế toán</h3>
+          <p class="mt8 sub"><b>Thao tác:</b> Đăng nhập với tư cách Kế toán.</p>
+          <p class="mt4 sub"><b>Kết quả:</b> Kết nối thẳng vào DB2. Chỉ hiển thị <code>MaNV</code>, <code>LuongCoBan</code>, <code>HeSo</code>. Kế toán làm việc với ID mà không biết tên người thụ hưởng.</p>
+        </div>
+
+        <div class="card purple">
+          <h3 class="purple"><i class="fas fa-crown"></i> Demo 3: Tài khoản Admin</h3>
+          <p class="mt8 sub"><b>Thao tác:</b> Đăng nhập Admin và gọi <code>SELECT * FROM vw_HoSoToanDien</code>.</p>
+          <p class="mt4 sub"><b>Kết quả:</b> Hiện <b>Toàn bộ thông tin</b> (Tên + Lương). Chứng minh <i>Tính trong suốt</i> thành công nhờ Federated + View.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SLIDE 6 — DEMO 4: ROLLBACK SỰ CỐ
+  ───────────────────────────────────────────── -->
+  <div class="slide" id="slide-6">
+    <div class="slide-inner">
+      <div class="tag tag-danger mb12">Đỉnh cao hệ thống</div>
+      <h2>Demo 4: Xử lý Sự cố & Rollback</h2>
+      
+      <div class="tc-narrator">
+        <div class="nar-label">Kịch bản</div>
+        Thử nghiệm độ bền bỉ của Stored Procedure bằng cách ngắt kết nối mạng giữa chừng khi đang thêm nhân viên mới.
+      </div>
+
+      <div class="row mt20">
+        <div class="col">
+          <div class="card highlight" style="height:100%">
+            <h3 class="accent mb8">Bước 1: Giả lập Sập Server</h3>
+            <p class="sub mb8">Mở Docker Desktop, bấm <b>STOP</b> container <code>mysql-luong</code>. Điều này giả lập việc DB2 bị mất điện hoặc đứt cáp quang.</p>
+            <div style="background:#000; padding:10px; border-radius:5px; font-family:monospace; color:#ff7b72; font-size:0.8rem">
+              $ docker stop mysql-luong<br>
+              mysql-luong exited with code 137
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card danger" style="height:100%">
+            <h3 class="danger mb8">Bước 2: Ghi dữ liệu & Hủy bỏ</h3>
+            <p class="sub mb8">Trên Web, nhập Form thêm <b>Mã 100 - Trần Lỗi Mạng</b> và Lưu. Hệ thống báo lỗi. Kiểm tra lại danh sách Nhân viên (DB1):</p>
+            <ul style="color:var(--text2); margin-left:20px; font-size:0.9rem">
+              <li>Lệnh Insert DB1 ban đầu thành công.</li>
+              <li>Lệnh Insert DB2 (qua Federated) thất bại.</li>
+              <li style="color:var(--danger)">→ Kích hoạt <b>ROLLBACK</b> xóa luôn bản ghi ở DB1. Không có rác dữ liệu!</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <h3 class="mt24" style="text-align:center; color:var(--accent2)">✅ KẾT THÚC BÁO CÁO ĐỒ ÁN</h3>
+    </div>
+  </div>
+
+</div><!-- /slides-wrapper -->
+
+<div class="key-hint">← → Arrow keys hoặc click nút Prev / Next</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const counter = document.getElementById('slide-counter');
+const bar = document.getElementById('progress-bar');
+let cur = 0;
+const total = slides.length;
+
+function goTo(n) {
+  if (n === cur || n < 0 || n >= total) return;
+  const oldCur = cur;
+  slides[oldCur].classList.remove('active');
+  cur = n;
+  slides[cur].classList.add('active');
+  counter.textContent = (cur + 1) + ' / ' + total;
+  bar.style.width = ((cur + 1) / total * 100) + '%';
+  const inner = slides[cur].querySelector('.slide-inner');
+  if (inner) inner.scrollTop = 0;
+}
+
+function next() { goTo(cur + 1); }
+function prev() { goTo(cur - 1); }
+
+document.getElementById('btn-next').addEventListener('click', next);
+document.getElementById('btn-prev').addEventListener('click', prev);
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next();
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   prev();
+});
+
+// Init
+counter.textContent = '1 / ' + total;
+bar.style.width = (1 / total * 100) + '%';
+</script>
+</body>
+</html>

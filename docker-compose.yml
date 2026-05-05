@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  mysql-hanhchinh: # Node 1: Thông tin chung
+    image: mysql:8.0
+    command: --federated # BẮT BUỘC: Bật tính năng liên kết server
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db1-init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  mysql-luong: # Node 2: Lương thưởng
+    image: mysql:8.0
+    command: --federated # BẮT BUỘC: Bật tính năng liên kết server
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./db2-init.sql:/docker-entrypoint-initdb.d/init.sql
