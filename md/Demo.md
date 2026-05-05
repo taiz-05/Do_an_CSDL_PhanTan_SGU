@@ -10,7 +10,7 @@ Tài liệu này hướng dẫn chi tiết 10 bước thực hiện demo trướ
 3. **Frontend:** Mở file `index.html` bằng Live Server trên trình duyệt (Chrome/Edge).
 4. **Công cụ Database (Tùy chọn):** Mở sẵn DBeaver hoặc Navicat kết nối vào port `3306` (DB1) và `3307` (DB2).
 
----
+----
 
 ## 🟢 KỊCH BẢN 1: BẢO MẬT PHÂN MẢNH - TÀI KHOẢN NHÂN VIÊN
 **Mục tiêu:** Chứng minh Nhân viên chỉ truy cập được dữ liệu thông tin chung, hoàn toàn không thấy thông tin lương[cite: 16].
@@ -134,6 +134,7 @@ USE db_hanhchinh;
 **Bước 3: Thực hiện truy vấn "vượt rào" (Bypass)**
 1. Tiếp tục, bạn gõ câu lệnh cấm kỵ này vào và nhấn Enter:
    ```sql
+   USE db_hanhchinh;
    SELECT * FROM vw_HoSoToanDien;
    
 **Bước 4: Chốt hạ bằng thông báo lỗi đỏ chót**
